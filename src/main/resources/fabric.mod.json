@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "cubiomes-voxelmap-integration",
+	"version": "${version}",
+	"name": "Cubiomes Voxelmap Integration",
+	"description": "Cubiomes 4 Voxelmap",
+	"authors": [
+		"IzumiiKonata"
+	],
+	"license": "MIT",
+	"icon": "assets/cubiomes-voxelmap-integration/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"org.konata.cvi.CubiomesVoxelmapIntegration"
+		]
+	},
+	"mixins": [
+		"cubiomes-voxelmap-integration.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=23",
+		"fabric-api": "*"
+	}
+}
