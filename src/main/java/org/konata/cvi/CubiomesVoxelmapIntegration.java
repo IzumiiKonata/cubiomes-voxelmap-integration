@@ -4,24 +4,21 @@ import com.mamiyaotaru.voxelmap.VoxelConstants;
 import com.mamiyaotaru.voxelmap.util.Waypoint;
 import net.fabricmc.api.ModInitializer;
 
+import org.konata.cvi.cubiomes.datatypes.WorldInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CubiomesVoxelmapIntegration implements ModInitializer {
+
 	public static final String MOD_ID = "cubiomes-voxelmap-integration";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	public static final WorldInfo worldInfo = new WorldInfo();
 
 	@Override
 	public void onInitialize() {
-//		VoxelConstants.getVoxelMapInstance().getWaypointManager().addWaypoint(new Waypoint());
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
-
-		LOGGER.info("Hello Fabric world!");
+		CVICommand.register();
 	}
+
 }
