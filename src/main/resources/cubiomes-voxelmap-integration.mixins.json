@@ -2,13 +2,18 @@
 	"required": true,
 	"package": "org.konata.cvi.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [
-		"ExampleMixin"
-	],
 	"injectors": {
 		"defaultRequire": 1
 	},
 	"overwrites": {
 		"requireAnnotations": true
-	}
+	},
+	"client": [
+		"GuiSlotWaypointsMixin",
+		"GuiWaypointsMixin",
+		"WaypointMixin"
+	],
+	"mixins": [
+		"WaypointManagerMixin"
+	]
 }

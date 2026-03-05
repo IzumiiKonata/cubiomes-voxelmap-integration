@@ -2,6 +2,7 @@ package org.konata.cvi.cubiomes;
 
 import cubiomes.ffm.*;
 import lombok.experimental.UtilityClass;
+import org.konata.cvi.EnumStructure;
 import org.konata.cvi.cubiomes.datatypes.ExtGenConfig;
 import org.konata.cvi.cubiomes.datatypes.VarPos;
 import org.konata.cvi.cubiomes.datatypes.WorldInfo;
@@ -49,6 +50,7 @@ public class CubiomesUtils {
             List<VarPos> out,
             /* Type: StructureConfig */
             final MemorySegment sconf,
+            EnumStructure structure,
             WorldInfo wi,
             int dim,
             int x0, int z0,
@@ -80,7 +82,7 @@ public class CubiomesUtils {
 
                 if (Pos.x(p) >= x0 && Pos.x(p) < x1 && Pos.z(p) >= z0 && Pos.z(p) < z1)
                 {
-                    VarPos vp = new VarPos(arena, p, StructureConfig.structType(sconf));
+                    VarPos vp = new VarPos(arena, p, StructureConfig.structType(sconf), structure);
                     if (nogen)
                     {
                         out.add(vp);
@@ -112,6 +114,21 @@ public class CubiomesUtils {
                                         pieces.asSlice(sz * Piece.sizeof(), Piece.sizeof());
                                 vp.pieces.add(slice);
                             }
+
+                            if (structure == EnumStructure.END_CITY_WITH_SHIP) {
+                                boolean hasShip = false;
+
+                                for (MemorySegment piece : vp.pieces) {
+                                    if (Piece.name(piece).getString(0).equals("ship")) {
+                                        hasShip = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!hasShip)
+                                    continue;
+                            }
+
 //                            vp.pieces.assign(pieces, pieces + n);
                             cubiomes.ffm.Pos3.y(Piece.bb0(vp.pieces.getFirst()), y); // height of end city pieces are relative to surface
                         }

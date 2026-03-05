@@ -1,6 +1,7 @@
 package org.konata.cvi.cubiomes.datatypes;
 
 import cubiomes.ffm.StructureVariant;
+import org.konata.cvi.EnumStructure;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -29,9 +30,12 @@ public class VarPos {
      */
     public List<MemorySegment> pieces;
 
-    public VarPos(Arena arena, MemorySegment pos, int type) {
+    public final EnumStructure structure;
+
+    public VarPos(Arena arena, MemorySegment pos, int type, EnumStructure structure) {
         this.pos = pos;
         this.type = type;
+        this.structure = structure;
         this.v = StructureVariant.allocate(arena);
         this.pieces = new ArrayList<>();
     }

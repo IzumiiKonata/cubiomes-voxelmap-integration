@@ -17,15 +17,28 @@ public enum EnumStructure {
 //    STRONGHOLD,
     MONUMENT,
     OCEAN_RUIN,
-    FORTRESS,
-    END_CITY,
+    FORTRESS(false, true, false),
+    END_CITY(false, false, true),
+    END_CITY_WITH_SHIP(false, false, true),
     BURIED_TREASURE,
     BASTION_REMNANT,
     VILLAGE,
     RUINED_PORTAL,
-    RUINED_PORTAL_NETHER,
+    RUINED_PORTAL_NETHER(false, true, false),
     ANCIENT_CITY,
     TRAIL_RUINS,
-    TRIAL_CHAMBERS
+    TRIAL_CHAMBERS;
+
+    public final boolean canGenerateInOverworld, canGenerateInNether, canGenerateInEnd;
+
+    EnumStructure() {
+        this(true, false, false);
+    }
+
+    EnumStructure(boolean canGenerateInOverworld, boolean canGenerateInNether, boolean canGenerateInEnd) {
+        this.canGenerateInOverworld = canGenerateInOverworld;
+        this.canGenerateInNether = canGenerateInNether;
+        this.canGenerateInEnd = canGenerateInEnd;
+    }
 
 }

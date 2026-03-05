@@ -11,7 +11,7 @@
 	"icon": "assets/cubiomes-voxelmap-integration/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
+		"client": [
 			"org.konata.cvi.CubiomesVoxelmapIntegration"
 		]
 	},
@@ -22,6 +22,7 @@
 		"fabricloader": ">=0.18.4",
 		"minecraft": "~1.21.11",
 		"java": ">=23",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"voxelmap": ">=1.21.11-1.15.13"
 	}
 }
