@@ -23,6 +23,6 @@
 		"minecraft": "~1.21.11",
 		"java": ">=23",
 		"fabric-api": "*",
-		"voxelmap": ">=1.21.11-1.15.13"
+		"voxelmap": "*"
 	}
 }
