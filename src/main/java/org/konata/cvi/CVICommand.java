@@ -10,9 +10,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import cubiomes.ffm.Cubiomes;
-import cubiomes.ffm.Pos;
-import cubiomes.ffm.StructureConfig;
+import cubiomes.ffm.*;
 import lombok.experimental.UtilityClass;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -27,6 +25,7 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec3;
 import org.konata.cvi.cubiomes.CubiomesUtils;
 import org.konata.cvi.cubiomes.datatypes.VarPos;
+import org.konata.cvi.cubiomes.datatypes.WorldInfo;
 import org.konata.cvi.interfaces.WaypointExt;
 
 import java.lang.foreign.Arena;
@@ -99,7 +98,7 @@ public class CVICommand {
 
     private static int addWaypoints(CommandContext<FabricClientCommandSource> ctx) {
 
-        if (foundStructures.isEmpty()) {
+        if (structuresFound.isEmpty()) {
             ctx.getSource().sendFeedback(Component.literal(ChatFormatting.RED + "No structure found!"));
             return 0;
         }
@@ -107,7 +106,7 @@ public class CVICommand {
         WaypointManager waypointManager = VoxelConstants.getVoxelMapInstance().getWaypointManager();
         Identifier dimensionType = Minecraft.getInstance().level.dimension().identifier();
 
-        for (StructureContainer varPos : foundStructures) {
+        for (StructureContainer varPos : structuresFound) {
             int x = varPos.x;
             int z = varPos.z;
 
@@ -149,11 +148,13 @@ public class CVICommand {
         }
     }
 
-    final List<StructureContainer> foundStructures = new CopyOnWriteArrayList<>();
+    final List<StructureContainer> structuresFound = new CopyOnWriteArrayList<>();
 
     private int findStructure(CommandContext<FabricClientCommandSource> ctx, int range) {
 
-        if (CubiomesVoxelmapIntegration.worldInfo.seed == 0) {
+        WorldInfo worldInfo = CubiomesVoxelmapIntegration.worldInfo;
+
+        if (worldInfo.seed == 0) {
             ctx.getSource().sendFeedback(Component.literal(ChatFormatting.RED + "Seed not set! Use /cvi setseed <seed> to set seed"));
             return 0;
         }
@@ -171,13 +172,6 @@ public class CVICommand {
         Arena arena = Arena.ofShared();
         List<VarPos> pos = new ArrayList<>();
 
-        MemorySegment structureConfig = StructureConfig.allocate(arena);
-
-        if (CubiomesUtils.getStructureConfig_override(mapStructure(structureEnum), CubiomesVoxelmapIntegration.worldInfo.mc, structureConfig) == 0) {
-            ctx.getSource().sendFeedback(Component.literal(ChatFormatting.RED + "Structure config not valid!"));
-            return 0;
-        }
-
         Vec3 position = Minecraft.getInstance().player.position();
         int x = (int) position.x;
         int z = (int) position.z;
@@ -187,34 +181,101 @@ public class CVICommand {
         int fromZ = z - range * 16;
         int toZ = z + range * 16;
 
-        new Thread(() -> {
-            try {
-                CubiomesUtils.getStructs(arena, pos, structureConfig, structureEnum, CubiomesVoxelmapIntegration.worldInfo, mapDimension(dimensionTypeHolder), fromX, fromZ, toX, toZ, false);
+        if (structureEnum == EnumStructure.STRONGHOLD) {
+            new Thread(() -> {
 
-                foundStructures.clear();
-                for (VarPos p : pos) {
-                    foundStructures.add(new StructureContainer(structureEnum, Pos.x(p.pos), Pos.z(p.pos)));
-                }
+                // Type: Generator
+                MemorySegment g = Generator.allocate(arena);
 
-                Minecraft.getInstance().schedule(() -> {
-                    ctx.getSource().sendFeedback(Component.literal("Found " + pos.size() + " \"" + structureEnum.name() + "\" within " + range + " chunks"));
+                Cubiomes.setupGenerator(g, worldInfo.mc, worldInfo.large ? 1 : 0);
+                Cubiomes.applySeed(g, Cubiomes.DIM_OVERWORLD(), worldInfo.seed);
 
-                    if (!foundStructures.isEmpty()) {
-                        MutableComponent clickHere = Component.literal("[Click Here]");
-                        clickHere.setStyle(
-                            Style.EMPTY
-                                .withBold(true)
-                                .withColor(ChatFormatting.GREEN)
-                                .withClickEvent(new ClickEvent.RunCommand("cvi addwaypoints"))
-                        );
-                        MutableComponent msg = Component.literal("Add them into VoxelMap's waypoints ");
-                        ctx.getSource().sendFeedback(msg.append(clickHere));
+                // Type: StrongholdIter
+                MemorySegment sh = StrongholdIter.allocate(arena);
+
+                Cubiomes.initFirstStronghold(arena, sh, worldInfo.mc, worldInfo.seed);
+
+                // get the maximum relevant ring number
+                int rx1 = Math.abs(fromX), rx2 = Math.abs(toX);
+                int rz1 = Math.abs(fromZ), rz2 = Math.abs(toZ);
+                int xt = Math.max(rx1, rx2) + 112+8;
+                int zt = Math.max(rz1, rz2) + 112+8;
+                int rmax = xt*xt + zt*zt;
+                rmax = (int)((Math.sqrt(rmax) - 1408) / 3072);
+
+                try {
+                    structuresFound.clear();
+                    while (Cubiomes.nextStronghold(sh, g) > 0)
+                    {
+                        if (StrongholdIter.ringnum(sh) > rmax)
+                            break;
+
+                        // Type: Pos
+                        MemorySegment p = StrongholdIter.pos(sh);
+                        int posX = Pos.x(p);
+                        int posZ = Pos.z(p);
+                        if (posX >= fromX && posX <= toX && posZ >= fromZ && posZ <= toZ) {
+                            structuresFound.add(new StructureContainer(structureEnum, posX, posZ));
+                        }
                     }
-                });
-            } finally {
-                arena.close();
+
+                    Minecraft.getInstance().schedule(() -> {
+                        ctx.getSource().sendFeedback(Component.literal("Found " + structuresFound.size() + " \"" + structureEnum.name() + "\" within " + range + " chunks"));
+
+                        if (!structuresFound.isEmpty()) {
+                            MutableComponent clickHere = Component.literal("[Click Here]");
+                            clickHere.setStyle(
+                                    Style.EMPTY
+                                            .withBold(true)
+                                            .withColor(ChatFormatting.GREEN)
+                                            .withClickEvent(new ClickEvent.RunCommand("cvi addwaypoints"))
+                            );
+                            MutableComponent msg = Component.literal("Add them into VoxelMap's waypoints ");
+                            ctx.getSource().sendFeedback(msg.append(clickHere));
+                        }
+                    });
+                } finally {
+                    arena.close();
+                }
+            }).start();
+
+        } else {
+            MemorySegment structureConfig = StructureConfig.allocate(arena);
+
+            if (CubiomesUtils.getStructureConfig_override(mapStructure(structureEnum), worldInfo.mc, structureConfig) == 0) {
+                ctx.getSource().sendFeedback(Component.literal(ChatFormatting.RED + "Structure config not valid!"));
+                return 0;
             }
-        }).start();
+
+            new Thread(() -> {
+                try {
+                    CubiomesUtils.getStructs(arena, pos, structureConfig, structureEnum, worldInfo, mapDimension(dimensionTypeHolder), fromX, fromZ, toX, toZ, false);
+
+                    structuresFound.clear();
+                    for (VarPos p : pos) {
+                        structuresFound.add(new StructureContainer(structureEnum, Pos.x(p.pos), Pos.z(p.pos)));
+                    }
+
+                    Minecraft.getInstance().schedule(() -> {
+                        ctx.getSource().sendFeedback(Component.literal("Found " + pos.size() + " \"" + structureEnum.name() + "\" within " + range + " chunks"));
+
+                        if (!structuresFound.isEmpty()) {
+                            MutableComponent clickHere = Component.literal("[Click Here]");
+                            clickHere.setStyle(
+                                    Style.EMPTY
+                                            .withBold(true)
+                                            .withColor(ChatFormatting.GREEN)
+                                            .withClickEvent(new ClickEvent.RunCommand("cvi addwaypoints"))
+                            );
+                            MutableComponent msg = Component.literal("Add them into VoxelMap's waypoints ");
+                            ctx.getSource().sendFeedback(msg.append(clickHere));
+                        }
+                    });
+                } finally {
+                    arena.close();
+                }
+            }).start();
+        }
 
         return 1;
     }
@@ -253,7 +314,8 @@ public class CVICommand {
             case IGLOO -> Cubiomes.Igloo();
             case SHIPWRECK -> Cubiomes.Shipwreck();
             case SWAMP_HUT -> Cubiomes.Swamp_Hut();
-//            case STRONGHOLD -> Cubiomes.placeholder();
+            // strong hold needs additional processing
+            case STRONGHOLD -> Cubiomes.none();
             case MONUMENT -> Cubiomes.Monument();
             case OCEAN_RUIN -> Cubiomes.Ocean_Ruin();
             case FORTRESS -> Cubiomes.Fortress();

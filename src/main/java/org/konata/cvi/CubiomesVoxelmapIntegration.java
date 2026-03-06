@@ -5,6 +5,7 @@ import com.mamiyaotaru.voxelmap.util.Waypoint;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 
+import org.konata.cvi.cubiomes.CubiomesUtils;
 import org.konata.cvi.cubiomes.datatypes.WorldInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class CubiomesVoxelmapIntegration implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		CubiomesUtils.loadNatives();
 		CVICommand.register();
 	}
 

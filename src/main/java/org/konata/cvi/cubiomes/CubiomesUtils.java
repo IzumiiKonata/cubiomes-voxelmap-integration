@@ -164,7 +164,7 @@ public class CubiomesUtils {
         }
     }
 
-    private static void loadNatives() {
+    public static void loadNatives() {
         File libFile;
         String libFileName = "/libcubiomes.dll";
 
@@ -207,10 +207,6 @@ public class CubiomesUtils {
         } catch (UnsatisfiedLinkError ule) {
             ule.printStackTrace();
         }
-    }
-
-    static {
-        loadNatives();
     }
 
 }

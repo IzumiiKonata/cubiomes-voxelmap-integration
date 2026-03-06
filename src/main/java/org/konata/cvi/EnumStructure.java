@@ -14,7 +14,7 @@ public enum EnumStructure {
     IGLOO,
     SHIPWRECK,
     SWAMP_HUT,
-//    STRONGHOLD,
+    STRONGHOLD,
     MONUMENT,
     OCEAN_RUIN,
     FORTRESS(false, true, false),
