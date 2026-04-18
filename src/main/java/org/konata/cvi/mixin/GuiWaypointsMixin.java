@@ -26,7 +26,7 @@ public abstract class GuiWaypointsMixin extends GuiScreenMinimap {
     @Shadow
     protected abstract void sort();
 
-    @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;setFocused(Z)V"))
+    @Inject(method = "init", at = @At(value = "INVOKE", target = "Lcom/mamiyaotaru/voxelmap/gui/GuiWaypoints;sort()V"))
     public void init(CallbackInfo ci) {
         this.addRenderableWidget((new Button.Builder(Component.literal("Show CVI Waypoints: " + CubiomesVoxelmapIntegration.showCVIWaypoints), (button) -> {
             CubiomesVoxelmapIntegration.showCVIWaypoints = !CubiomesVoxelmapIntegration.showCVIWaypoints;

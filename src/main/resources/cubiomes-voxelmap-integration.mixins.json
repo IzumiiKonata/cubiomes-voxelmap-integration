@@ -9,7 +9,7 @@
 		"requireAnnotations": true
 	},
 	"client": [
-		"GuiSlotWaypointsMixin",
+      "GuiListWaypointsMixin",
 		"GuiWaypointsMixin",
 		"WaypointMixin"
 	],
